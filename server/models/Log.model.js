@@ -13,8 +13,7 @@ const LogSchema = new mongoose.Schema({
     type: Date,
   },
   followup: {
-    type: String,
-    required: true
+    type:Date
   },
   status:{
     type:String,
