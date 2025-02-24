@@ -7,6 +7,8 @@ import Layout from "./components/app/Layout"
 import Dashboard from "./components/app/Dashboard"
 import Customer from "./components/app/Customer"
 import Logs from "./components/app/Logs"
+import { ToastContainer } from 'react-toastify';
+
 
 
 const AppRouter = () => {
@@ -23,6 +25,7 @@ const AppRouter = () => {
         </Route>
         <Route path="*" element={<h1>Not found </h1>} />
       </Routes>
+      <ToastContainer />
     </BrowserRouter>
   )
 }
