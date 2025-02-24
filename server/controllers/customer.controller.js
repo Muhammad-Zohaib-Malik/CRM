@@ -1,7 +1,7 @@
-import { Customer } from '../models/customer.model';
+import { Customer } from '../models/customer.model.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
-import { asyncHandler } from '../utils/asyncHandler';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 // Create a new customer
 export const createCustomer = asyncHandler(async (req, res ) => {

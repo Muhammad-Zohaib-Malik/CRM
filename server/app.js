@@ -1,20 +1,20 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv'
+import connectDB from './config/db.js';
+import customerRouter from './routes/customer.route.js'
 
 const app = express();
-const PORT=process.env.PORT
-
 dotenv.config()
+const port=process.env.PORT
 // Middleware
 app.use(bodyParser.urlencoded({extended:false}))
 app.use(bodyParser.json());
 
-// Simple route
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+connectDB()
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+app.use('/customers',customerRouter)
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
 });
