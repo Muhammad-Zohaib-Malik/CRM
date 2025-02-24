@@ -17,7 +17,7 @@ export const createCustomer = asyncHandler(async (req, res) => {
 
 // Fetch all customers
 export const fetchCustomer = asyncHandler(async (_, res) => {
-  const customers = await Customer.find();
+  const customers = await Customer.find().sort({createdAt:-1});
   res.status(200).json(new ApiResponse(200, customers, 'Customers fetched successfully'));
 });
 
