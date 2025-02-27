@@ -1,6 +1,6 @@
 import useSWR, { mutate } from 'swr'
 import fetcher from '../../lib/fetcher'
-import { Button, Divider, Form, Input, Modal, Skeleton, Table } from 'antd'
+import { Button, Divider, Form, Input, Modal, Skeleton, Table,Pagination } from 'antd'
 import {
   DeleteOutlined,
   EditOutlined,
@@ -14,21 +14,32 @@ import axios from 'axios';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import moment from 'moment'
+import lodash from 'lodash'
+
 axios.defaults.baseURL = 'http://localhost:8080'
 
 
 const Customer = () => {
-  const { data, isLoading } = useSWR('/customers', fetcher)
+  const [page,setPage]=useState(1)
+  const [limit]=useState(5)
+  const { data, isLoading } = useSWR(`/customers?page=${page}`, fetcher)
+  // console.log(data)
+  const [filter, setFilter] = useState([])
   const [open, setOpen] = useState(false)
 
   const deleteCustomer = async (id) => {
     try {
       await axios.delete(`/customers/${id}`);
-      mutate('/customers'); // Refresh the customer list
+      mutate(`/customers?page=${page}`); 
     } catch (error) {
       console.error("Error deleting customer:", error);
     }
   };
+
+
+  const onPaginate = async (pageNo) => {
+    setPage(pageNo)
+  }
 
   const columns = [
     {
@@ -49,8 +60,8 @@ const Customer = () => {
     {
       'key': 'created',
       title: 'Created',
-      render: (item) => (
-        <label>{moment(item.createdAt).format('DD-MM-YYYY hh:mm A')}</label>
+      render: (item) => ( 
+        <label>{moment(item.createdAt).format('DD MMM YYYY hh:mm A')}</label>
       )
 
 
@@ -70,13 +81,21 @@ const Customer = () => {
   const addCustomer = async (values) => {
     try {
       const response = await axios.post('/customers', values)
-      mutate('/customers')
+      mutate(`/customers?page=${page}`)
       toast.success(response.data.message)
       setOpen(false)
     } catch (error) {
       toast.error(error.response?.data?.message || error.message || "An error occurred")
     }
   }
+
+  const onSearch=lodash.debounce((e)=>{
+      const key=e.target.value.trim()
+      const filtered=data.filter((item)=>item.fullname.toLowerCase().includes(key.toLowerCase()))
+      setFilter(filtered)
+  },500)
+
+
 
   if (isLoading) {
     return <Skeleton active />
@@ -88,7 +107,8 @@ const Customer = () => {
         <Input size='large'
           placeholder='Search Customers'
           suffix={<SearchOutlined className='!text-gray-500' />}
-          className=' !w-[350px]' />
+          className=' !w-[350px]'
+          onChange={onSearch} />
         <Button type='primary'
           icon={<PlusOutlined />}
           iconPosition='start'
@@ -98,9 +118,17 @@ const Customer = () => {
       </div>
       <Table
         columns={columns}
-        dataSource={data}
-        rowKey="_id">
-      </Table>
+        dataSource={filter.length > 0 ? filter : data}
+        rowKey="_id"
+        pagination={false}
+        />
+      <Pagination  align='end'
+       total={50}
+        onChange={onPaginate}
+         current={page}
+           pageSize={limit}
+           /> 
+      
       <Modal open={open} footer={null} title="Add Customer" onCancel={() => setOpen(false)} maskClosable={false}>
         <Divider />
         <Form layout='vertical' onFinish={addCustomer}>

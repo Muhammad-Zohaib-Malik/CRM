@@ -16,13 +16,17 @@ export const createCustomer = asyncHandler(async (req, res) => {
 });
 
 // Fetch all customers
-export const fetchCustomer = asyncHandler(async (_, res) => {
-  const customers = await Customer.find().sort({createdAt:-1});
+export const fetchCustomer = asyncHandler(async (req, res) => {
+  const page = req.query.page || 1
+  const limit = 5
+  const skip = (page - 1) * limit
+  const customers = await Customer.find().skip(skip).limit(limit).sort({ createdAt: -1 });
   res.status(200).json(new ApiResponse(200, customers, 'Customers fetched successfully'));
 });
 
 // Fetch a customer by ID
 export const fetchCustomerById = asyncHandler(async (req, res) => {
+
   const { id } = req.params;
   const customer = await Customer.findById(id);
   if (!customer) {
