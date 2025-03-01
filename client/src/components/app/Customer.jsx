@@ -3,9 +3,12 @@ import fetcher from '../../lib/fetcher'
 import { Button, Divider, Form, Input, Modal, Skeleton, Table,Pagination } from 'antd'
 import {
   DeleteOutlined,
+  DownloadOutlined,
   EditOutlined,
+  ImportOutlined,
   PlusOutlined,
   SearchOutlined,
+  UploadOutlined,
   UserOutlined
 } from '@ant-design/icons';
 import PhoneInput from 'react-phone-input-2'
@@ -15,17 +18,20 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import moment from 'moment'
 import lodash from 'lodash'
+import * as XLS from "xlsx";
+
 
 axios.defaults.baseURL = 'http://localhost:8080'
 
 
 const Customer = () => {
+
   const [page,setPage]=useState(1)
   const [limit]=useState(5)
   const { data, isLoading } = useSWR(`/customers?page=${page}`, fetcher)
-  // console.log(data)
   const [filter, setFilter] = useState([])
   const [open, setOpen] = useState(false)
+  const [importModel,setImportModel]=useState(false)
 
   const deleteCustomer = async (id) => {
     try {
@@ -95,7 +101,39 @@ const Customer = () => {
       setFilter(filtered)
   },500)
 
+const downloadSample=()=>{
+  const a=document.createElement('a')
+  a.href='/sample.xlsx'
+  a.download='sample.xlsx'
+  a.click()
+  a.remove()
+}
 
+const importXlsFile=async(e)=>{
+  const input=e.target
+  const file=input.files[0]
+ if (
+  file.type !== "application/vnd.ms-excel" &&
+  file.type !== "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+) {
+  toast.error("Invalid file format");
+  return;
+}
+
+  const reader=new FileReader()
+  reader.readAsArrayBuffer(file)
+  reader.onload=(e)=>{
+    const result=new Uint8Array(e.target.result)
+    const excelFile=XLS.read(result,{type:'array'})
+    const key=excelFile.SheetNames[0]
+    const sheet=excelFile.Sheets[key]
+    const data=XLS.utils.sheet_to_json(sheet)
+    if(data.length==0)
+    {
+      return toast.error('No data found in file')
+    }
+  }
+}
 
   if (isLoading) {
     return <Skeleton active />
@@ -109,11 +147,17 @@ const Customer = () => {
           suffix={<SearchOutlined className='!text-gray-500' />}
           className=' !w-[350px]'
           onChange={onSearch} />
-        <Button type='primary'
+       <div className='space-x-2'>
+         <Button 
+          icon={<ImportOutlined />}
+          iconPosition='start'
+          size='large' onClick={()=>setImportModel(true)}>Import Customer</Button>
+          <Button type='primary'
           icon={<PlusOutlined />}
           iconPosition='start'
           className='!bg-violet-500'
           size='large' onClick={() => setOpen(true)}>Add Customer</Button>
+       </div>
 
       </div>
       <Table
@@ -154,6 +198,27 @@ const Customer = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+
+      <Modal open={importModel} footer={null} title="Import Customer Record" onCancel={() => setImportModel(false)} maskClosable={false}>
+      <Divider/>
+      <div className='grid grid-cols-2'>
+        <div className='space-y-4'>
+          <h1 className='text-xl font-semibold '>Sample XLS File Format</h1>
+          <Button icon={<DownloadOutlined size='large'/>} onClick={downloadSample}>Download Sample</Button>
+        </div>  
+        <div className='flex justify-center relative '>
+          <Button className='!w-[100px] !h-[100px] flex flex-col !text-gray-500'>
+            <UploadOutlined className='text-3xl'/>Upload
+            <input type="file"
+              accept='.xls' 
+              className='w-full h-full absolute top-0 left-0 opacity-0'
+              onChange={importXlsFile}/>
+            </Button>
+        </div>
+      </div>
+      </Modal>
+
     </div >
   )
 }
